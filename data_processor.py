@@ -1,7 +1,6 @@
 import json
 import numpy as np
 import pandas as pd
-from problem_config import ProblemConfig
 
 
 class DataProcessor:

@@ -1,10 +1,8 @@
 import logging
 import os
-import pickle
 import pandas as pd
 from pandas.util import hash_pandas_object
 import time
-from utils import AppPath
 
 
 class Predictor:
