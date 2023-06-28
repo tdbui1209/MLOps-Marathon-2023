@@ -1,18 +1,23 @@
-import pandas as pd
-import json
+import logging
+from pathlib import Path
 
 
-def get_input(request):
-    data = json.loads(request.data.decode('utf-8'))
-    id = data['id']
-    rows = data['rows']
-    columns = data['columns']
-    df = pd.DataFrame(rows, columns=columns)
-    return id, df
+logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.INFO)
 
-def save_data(path, rows, columns, batch_id):
-    with open(path + f"batch_{str(batch_id)}.txt", 'a') as f:
-        f.write(','.join(map(str, columns)) + '\n')
-        for row in rows:
-            r = [str(e).replace(',', '') for e in row]
-            f.write(",".join(str(e) for e in r) + '\n')
+
+class AppPath:
+    ROOT_DIR = Path('.')
+    DATA_DIR = ROOT_DIR / 'data'
+    # store raw data
+    RAW_DATA_DIR = DATA_DIR / 'raw_data'
+    # store processed data
+    TRAIN_DATA_DIR = DATA_DIR / 'train_data'
+    # store configs
+    MODEL_CONFIG_DIR = ROOT_DIR / 'config'
+    # store captured data
+    CAPTURED_DATA_DIR = DATA_DIR / 'captured_data'
+
+AppPath.RAW_DATA_DIR.mkdir(parents=True, exist_ok=True)
+AppPath.TRAIN_DATA_DIR.mkdir(parents=True, exist_ok=True)
+AppPath.MODEL_CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+AppPath.CAPTURED_DATA_DIR.mkdir(parents=True, exist_ok=True)
