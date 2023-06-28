@@ -16,8 +16,11 @@ class AppPath:
     MODEL_CONFIG_DIR = ROOT_DIR / 'config'
     # store captured data
     CAPTURED_DATA_DIR = DATA_DIR / 'captured_data'
+    # store models
+    MODEL_DIR = ROOT_DIR / 'models'
 
 AppPath.RAW_DATA_DIR.mkdir(parents=True, exist_ok=True)
 AppPath.TRAIN_DATA_DIR.mkdir(parents=True, exist_ok=True)
 AppPath.MODEL_CONFIG_DIR.mkdir(parents=True, exist_ok=True)
 AppPath.CAPTURED_DATA_DIR.mkdir(parents=True, exist_ok=True)
+AppPath.MODEL_DIR.mkdir(parents=True, exist_ok=True)
