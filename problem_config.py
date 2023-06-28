@@ -1,3 +1,4 @@
+import logging
 import json
 from utils import AppPath
 import pickle
@@ -15,7 +16,7 @@ class ProblemConfig:
             self.poly = pickle.load(f)
         with open(AppPath.MODEL_DIR / phase_id / prob_id / self.get_model_path(), 'rb') as f:
             self.model = pickle.load(f)
-        print('ProblemConfig is initialized')
+        logging.info(f'ProblemConfig {phase_id} - {prob_id} is initialized')
 
     def get_config(self, phase_id: str, prob_id: str):
         with open(AppPath.MODEL_CONFIG_DIR / phase_id / f'{prob_id}.json') as f:
