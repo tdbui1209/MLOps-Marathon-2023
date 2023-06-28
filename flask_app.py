@@ -1,99 +1,59 @@
 from flask import Flask, request
 import pickle
 import numpy as np
-from utils import get_input
+from data_processor import DataProcessor
+from problem_config import ProblemConfig
+from predictor import Predictor
 
 
-app = Flask(__name__)
+class PredictorApi:
 
-@app.route('/phase-1/prob-1/predict', methods=['POST'])
-def predict():
-    id, df = get_input(request)
+    def __init__(self):
+        self.app = Flask(__name__)
+        self.config_prob1 = ProblemConfig('phase1', 'prob1')
+        self.config_prob2 = ProblemConfig('phase1', 'prob2')
 
-    df = df[category_columns1 + numeric_columns1]
+        @self.app.route('/')
+        def root():
+            return {'message': 'Hello World!'}
 
-    OH_X = encoder1.transform(df[category_columns1])
-    scaled_X= scaler1.transform(df[numeric_columns1])
-    poly_X = poly1.transform(scaled_X)
+        @self.app.route('/phase-1/prob-1/predict', methods=['POST'])
+        def predict_prob1():
+            return self.predict(request, self.config_prob1)
 
-    X = np.concatenate((OH_X, poly_X), axis=1)
+        @self.app.route('/phase-1/prob-2/predict', methods=['POST'])
+        def predict_prob2():
+            return self.predict(request, self.config_prob2)
+        
+    def predict(self, request, config):
+        id, df = DataProcessor.get_input(request)
+        category_columns = config.get_categorical_cols()
+        numeric_columns = config.get_numerical_cols()
 
-    y_prob = model1.predict_proba(X)
+        encoder = config.encoder
+        scaler = config.scaler
+        poly = config.poly
+        model = config.model
 
-    output = {
-        'id': id,
-        'predictions': [0 if i[0] > 0.8 else 1 for i in y_prob],
-        'drift': 0
-    }
-    return output
+        X = DataProcessor.process(df, numeric_columns, category_columns, encoder, scaler, poly)
+        predictor = Predictor(model)
+        y_pred = predictor.predict(X)
+        is_drift = predictor.detect_drift(df)
 
-@app.route('/phase-1/prob-2/predict', methods=['POST'])
-def predict2():
-    id, df = get_input(request)
-
-    df = df[category_columns2 + numeric_columns2]
-    OH_X = encoder2.transform(df[category_columns2])
-
-    scaled_X = scaler2.transform(df[numeric_columns2])
-    poly_X = poly2.transform(scaled_X)
-
-    X = np.concatenate((OH_X, poly_X), axis=1)
-
-    y_prob = model2.predict_proba(X)
-    output = {
-        'id': id,
-        'predictions': [0 if i[0] > 0.7 else 1 for i in y_prob],
-        'drift': 0
-    }
-    return output
+        output = {
+            'id': id,
+            'predictions': y_pred,
+            'drift': is_drift
+        }
+        return output
+        
+    def run(self, host, port, debug=False):
+        self.app.run(host, port, debug)
 
 
 if __name__ == '__main__':
     host = '192.168.1.11'
     port = 5000
-
-    global model1, encoder1, scaler1, poly1
-    global model2, encoder2, scaler2, poly2
-
-    model_paths = 'models/phase1/prob1/'
-    model_file = model_paths + 'model.sav'
-    with open(model_file, 'rb') as f:
-        model1 = pickle.load(f)
-    encoder_file = model_paths + 'encoder.sav'
-    with open(encoder_file, 'rb') as f:
-        encoder1 = pickle.load(f)
-    scaler_file = model_paths + 'scaler.sav'
-    with open(scaler_file, 'rb') as f:
-        scaler1 = pickle.load(f)
-    poly_file = model_paths + 'poly.sav'
-    with open(poly_file, 'rb') as f:
-        poly1 = pickle.load(f)
-
-
-    model_paths = 'models/phase1/prob2/'
-    model_file = model_paths + 'model.sav'
-    with open(model_file, 'rb') as f:
-        model2 = pickle.load(f)
-    encoder_file = model_paths + 'encoder.sav'
-    with open(encoder_file, 'rb') as f:
-        encoder2 = pickle.load(f)
-    scaler_file = model_paths + 'scaler.sav'
-    with open(scaler_file, 'rb') as f:
-        scaler2 = pickle.load(f)
-    poly_file = model_paths + 'poly.sav'
-    with open(poly_file, 'rb') as f:
-        poly2 = pickle.load(f)
-
-    global category_columns1, numeric_columns1, u_columns1
-    category_columns1 = ['feature1', 'feature2']
-    numeric_columns1 = ['feature3', 'feature4', 'feature5', 'feature6', 'feature7',
-                   'feature8', 'feature9', 'feature10', 'feature11', 'feature12',
-                   'feature13', 'feature14', 'feature15', 'feature16']
     
-    global category_columns2, numeric_columns2
-    category_columns2 = ['feature1', 'feature3', 'feature4', 'feature6', 'feature7', 'feature8',
-                        'feature9', 'feature10', 'feature11', 'feature12', 'feature14', 'feature15',
-                        'feature16', 'feature17', 'feature19', 'feature20']
-    numeric_columns2 = ['feature2', 'feature5', 'feature13', 'feature18']
-    
-    app.run(host=host, port=port, debug=True)
+    api = PredictorApi()
+    api.run(host, port, debug=True)
