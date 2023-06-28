@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request
+from flask import Flask, request
 import pickle
 import numpy as np
 from utils import get_input
@@ -11,19 +11,21 @@ def predict():
     id, df = get_input(request)
 
     df = df[category_columns1 + numeric_columns1]
+
     OH_X = encoder1.transform(df[category_columns1])
-    scaled_X = scaler1.transform(df[numeric_columns1])
+    scaled_X= scaler1.transform(df[numeric_columns1])
     poly_X = poly1.transform(scaled_X)
 
     X = np.concatenate((OH_X, poly_X), axis=1)
 
-    pred = model1.predict(X)
+    y_prob = model1.predict_proba(X)
+
     output = {
         'id': id,
-        'predictions': [int(i) for i in pred],
+        'predictions': [0 if i[0] > 0.8 else 1 for i in y_prob],
         'drift': 0
     }
-    return jsonify(output)
+    return output
 
 @app.route('/phase-1/prob-2/predict', methods=['POST'])
 def predict2():
@@ -37,13 +39,13 @@ def predict2():
 
     X = np.concatenate((OH_X, poly_X), axis=1)
 
-    pred = model2.predict(X)
+    y_prob = model2.predict_proba(X)
     output = {
         'id': id,
-        'predictions': [int(i) for i in pred],
+        'predictions': [0 if i[0] > 0.7 else 1 for i in y_prob],
         'drift': 0
     }
-    return jsonify(output)
+    return output
 
 
 if __name__ == '__main__':
@@ -82,11 +84,11 @@ if __name__ == '__main__':
     with open(poly_file, 'rb') as f:
         poly2 = pickle.load(f)
 
-    global category_columns1, numeric_columns1
-    category_columns1 = ['feature2', 'feature1']
+    global category_columns1, numeric_columns1, u_columns1
+    category_columns1 = ['feature1', 'feature2']
     numeric_columns1 = ['feature3', 'feature4', 'feature5', 'feature6', 'feature7',
-                       'feature8', 'feature9', 'feature10', 'feature11', 'feature12',
-                       'feature13', 'feature14', 'feature15', 'feature16']
+                   'feature8', 'feature9', 'feature10', 'feature11', 'feature12',
+                   'feature13', 'feature14', 'feature15', 'feature16']
     
     global category_columns2, numeric_columns2
     category_columns2 = ['feature1', 'feature3', 'feature4', 'feature6', 'feature7', 'feature8',
