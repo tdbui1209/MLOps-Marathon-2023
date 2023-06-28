@@ -1,15 +1,16 @@
+import argparse
 from flask import Flask, request
-import pickle
-import numpy as np
 from data_processor import DataProcessor
 from problem_config import ProblemConfig
 from predictor import Predictor
+from utils import AppPath
 
 
 class PredictorApi:
 
-    def __init__(self):
+    def __init__(self, capture_data):
         self.app = Flask(__name__)
+        self.capture_data = capture_data
         self.config_prob1 = ProblemConfig('phase1', 'prob1')
         self.config_prob2 = ProblemConfig('phase1', 'prob2')
 
@@ -27,6 +28,10 @@ class PredictorApi:
         
     def predict(self, request, config):
         id, df = DataProcessor.get_input(request)
+
+        if self.capture_data:
+            Predictor.save_request_data(df, AppPath.CAPTURED_DATA_DIR, str(id))
+
         category_columns = config.get_categorical_cols()
         numeric_columns = config.get_numerical_cols()
 
@@ -52,8 +57,13 @@ class PredictorApi:
 
 
 if __name__ == '__main__':
-    host = '192.168.1.11'
-    port = 5000
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--host', type=str, default='192.168.1.11')
+    parser.add_argument('--port', type=int, default=5000)
+    parser.add_argument('--debug', type=bool, default=False)
+    parser.add_argument('--capture-data', type=bool, default=False)
+    args = parser.parse_args()
+
     
-    api = PredictorApi()
-    api.run(host, port, debug=True)
+    api = PredictorApi(args.capture_data)
+    api.run(args.host, args.port, args.debug)
