@@ -6,7 +6,7 @@
 ## Getting Started
 1. Clone the repository to your local machine using the following command:
 ```
-git clone https://github.com/your-username/flask-app.git
+git clone https://github.com/tdbui1209/MLOps-Marathon-2023.git
 ```
 2. Change into the project directory:
 ```
