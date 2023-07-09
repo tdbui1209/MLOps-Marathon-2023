@@ -1,11 +1,13 @@
-from fastapi import FastAPI, Request
+import argparse
 
+from fastapi import FastAPI
 import uvicorn
 import pickle
 import numpy as np
 import pandas as pd
-from utils import Data
+from utils import AppPath, Data
 from predictor import Predictor
+from problem_config import ProblemConfig
 
 
 class PredictorAPI:
@@ -16,12 +18,14 @@ class PredictorAPI:
         @self.app.post('/phase-2/prob-1/predict')
         async def predict(data: Data):
             df = pd.DataFrame(data.rows, columns=data.columns)
+            if args.capture_data:
+                Predictor.save_request_data(df, AppPath.CAPTURED_DATA_DIR, str(data.id))
 
-            X_num = scaler1.transform(df[numerical_features1])
-            X_cat = encod1.transform(df[categorical_features1])
-
+            X_num = phase2_prob1_config.scaler.transform(df[phase2_prob1_config.get_numerical_cols()])
+            X_cat = phase2_prob1_config.encoder.transform(df[phase2_prob1_config.get_categorical_cols()])
             X = np.concatenate([X_num, X_cat], axis=1)
-            y_pred = Predictor(model1).predict(X)
+
+            y_pred = Predictor(phase2_prob1_config.model).predict(X)
             return {
                 'id': data.id,
                 'predictions': y_pred.tolist(),
@@ -31,11 +35,14 @@ class PredictorAPI:
         @self.app.post('/phase-2/prob-2/predict')
         async def predict(data: Data):
             df = pd.DataFrame(data.rows, columns=data.columns)
-            X_num = scaler2.transform(df[numerical_features2])
-            X_cat = encod2.transform(df[categorical_features2])
+            if args.capture_data:
+                Predictor.save_request_data(df, AppPath.CAPTURED_DATA_DIR, str(data.id))
 
+            X_num = phase2_prob2_config.scaler.transform(df[phase2_prob2_config.get_numerical_cols()])
+            X_cat = phase2_prob2_config.encoder.transform(df[phase2_prob2_config.get_categorical_cols()])
             X = np.concatenate([X_num, X_cat], axis=1)
-            y_pred = Predictor(model2).predict(X)
+
+            y_pred = Predictor(phase2_prob2_config.predict_model).predict(X)
             return {
                 'id': data.id,
                 'predictions': label_encod2.inverse_transform(y_pred).tolist(),
@@ -47,42 +54,16 @@ class PredictorAPI:
 
 
 if __name__ == "__main__":
-    models_path = 'models/'
-    global model1, model2
-    model1 = pickle.load(open(models_path + 'model1.sav', 'rb'))
-    model2 = pickle.load(open(models_path + 'model2.sav', 'rb'))
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--host', type=str)
+    parser.add_argument('--port', type=int)
+    parser.add_argument('--capture-data', action='store_true')
+    args = parser.parse_args()
 
-    global encod1, encod2
-    encod1 = pickle.load(open(models_path + 'encoder1.sav', 'rb'))
-    encod2 = pickle.load(open(models_path + 'encoder2.sav', 'rb'))
+    phase2_prob1_config = ProblemConfig('phase2', 'prob1')
+    phase2_prob2_config = ProblemConfig('phase2', 'prob2')
 
-    global scaler1, scaler2
-    scaler1 = pickle.load(open(models_path + 'scaler1.sav', 'rb'))
-    scaler2 = pickle.load(open(models_path + 'scaler2.sav', 'rb'))
-
-    global label_encod2
-    label_encod2 = pickle.load(open(models_path + 'label_encoder2.sav', 'rb'))
-
-    global categorical_features1, categorical_features2
-    global numerical_features1, numerical_features2
-
-    numerical_features1 = ["feature1", "feature5", "feature6", "feature7", "feature8", "feature9",
-                          "feature10", "feature11", "feature12", "feature13", "feature14", "feature15",
-                          "feature16", "feature17", "feature18", "feature19", "feature20", "feature21",
-                          "feature22", "feature23", "feature24", "feature25", "feature26", "feature27",
-                          "feature28", "feature29", "feature30", "feature31", "feature32", "feature33",
-                          "feature34", "feature35", "feature36", "feature37", "feature38", "feature39",
-                          "feature40", "feature41"]
-    categorical_features1 = ["feature2", "feature3", "feature4"]
-
-    numerical_features2 = ["feature1", "feature5", "feature6", "feature7", "feature8", "feature9",
-                          "feature10", "feature11", "feature12", "feature13", "feature14", "feature15",
-                          "feature16", "feature17", "feature18", "feature19", "feature20", "feature21",
-                          "feature22", "feature23", "feature24", "feature25", "feature26", "feature27",
-                          "feature28", "feature29", "feature30", "feature31", "feature32", "feature33",
-                          "feature34", "feature35", "feature36", "feature37", "feature38", "feature39",
-                          "feature40", "feature41"]
-    categorical_features2 = ["feature2", "feature3", "feature4"]
+    label_encod2 = pickle.load(open('models/phase2/prob2/' + 'label_encoder2.sav', 'rb'))
 
     api = PredictorAPI()
-    api.run(host="192.168.1.11", port=5000)
+    api.run(host=args.host, port=args.port)
