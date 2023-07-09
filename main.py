@@ -1,16 +1,10 @@
 from fastapi import FastAPI, Request
-from pydantic import BaseModel
 
 import uvicorn
 import pickle
 import numpy as np
 import pandas as pd
-
-
-class Data(BaseModel):
-    id: str
-    rows: list
-    columns: list
+from utils import Data
 
 
 class PredictorAPI:

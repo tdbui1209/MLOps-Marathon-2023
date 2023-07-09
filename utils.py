@@ -1,5 +1,6 @@
 import logging
 from pathlib import Path
+from pydantic import BaseModel
 
 
 logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.INFO)
@@ -24,3 +25,9 @@ AppPath.TRAIN_DATA_DIR.mkdir(parents=True, exist_ok=True)
 AppPath.MODEL_CONFIG_DIR.mkdir(parents=True, exist_ok=True)
 AppPath.CAPTURED_DATA_DIR.mkdir(parents=True, exist_ok=True)
 AppPath.MODEL_DIR.mkdir(parents=True, exist_ok=True)
+
+
+class Data(BaseModel):
+    id: str
+    rows: list
+    columns: list
