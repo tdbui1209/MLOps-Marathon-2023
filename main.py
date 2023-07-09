@@ -5,6 +5,7 @@ import pickle
 import numpy as np
 import pandas as pd
 from utils import Data
+from predictor import Predictor
 
 
 class PredictorAPI:
@@ -20,7 +21,7 @@ class PredictorAPI:
             X_cat = encod1.transform(df[categorical_features1])
 
             X = np.concatenate([X_num, X_cat], axis=1)
-            y_pred = model1.predict(X)
+            y_pred = Predictor(model1).predict(X)
             return {
                 'id': data.id,
                 'predictions': y_pred.tolist(),
@@ -34,7 +35,7 @@ class PredictorAPI:
             X_cat = encod2.transform(df[categorical_features2])
 
             X = np.concatenate([X_num, X_cat], axis=1)
-            y_pred = model2.predict(X)
+            y_pred = Predictor(model2).predict(X)
             return {
                 'id': data.id,
                 'predictions': label_encod2.inverse_transform(y_pred).tolist(),
