@@ -8,14 +8,12 @@ class ProblemConfig:
 
     def __init__(self, phase_id: str, prob_id: str):
         self.config = self.get_config(phase_id, prob_id)
-        with open(AppPath.MODEL_DIR / phase_id / prob_id / self.get_encoder_path(), 'rb') as f:
-            self.encoder = pickle.load(f)
-        with open(AppPath.MODEL_DIR / phase_id / prob_id / self.get_scaler_path(), 'rb') as f:
-            self.scaler = pickle.load(f)
-        with open(AppPath.MODEL_DIR / phase_id / prob_id / self.get_poly_path(), 'rb') as f:
-            self.poly = pickle.load(f)
-        with open(AppPath.MODEL_DIR / phase_id / prob_id / self.get_model_path(), 'rb') as f:
-            self.model = pickle.load(f)
+        self.phase_id = phase_id
+        self.prob_id = prob_id
+        self.encoder = self.get_encoder()
+        self.scaler = self.get_scaler()
+        self.poly = self.get_poly()
+        self.predict_model = self.get_predict_model()
         logging.info(f'ProblemConfig {phase_id} - {prob_id} is initialized')
 
     def get_config(self, phase_id: str, prob_id: str):
@@ -29,14 +27,22 @@ class ProblemConfig:
     def get_categorical_cols(self):
         return self.config['categorical_columns']
     
-    def get_encoder_path(self):
-        return self.config['encoder_path']
+    def get_encoder(self):
+        return self.load_model('encoder')
     
-    def get_scaler_path(self):
-        return self.config['scaler_path']
+    def get_scaler(self):
+        return self.load_model('scaler')
     
-    def get_poly_path(self):
-        return self.config['poly_path']
+    def get_poly(self):
+        return self.load_model('poly')
     
-    def get_model_path(self):
-        return self.config['model_path']
+    def get_predict_model(self):
+        return self.load_model('predict_model')
+
+    def load_model(self, config_key):
+        try:
+            with open(AppPath.MODEL_DIR / self.phase_id / self.prob_id / self.config[config_key], 'rb') as f:
+                return pickle.load(f)
+        except KeyError:
+            logging.info(f'{self.phase_id} {self.prob_id} does not have {config_key}')
+            return None
