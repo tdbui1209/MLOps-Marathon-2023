@@ -13,16 +13,12 @@ class Predictor:
 
     def predict(self, X):
         start_time = time.time()
-
-        y_prob = self.model.predict_proba(X)
-        y_pred = [0 if i[0] > self.threshold else 1 for i in y_prob]
-
+        y_pred = self.model.predict(X)
         run_time = round((time.time() - start_time) * 1000, 0)
         logging.info(f'prediction takes {run_time} ms')
-
         return y_pred
     
-    def detect_drift(self, df):
+    def detect_drift(self, X):
         return 0
 
     @staticmethod
